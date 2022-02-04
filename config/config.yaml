@@ -1,0 +1,14 @@
+datasets:
+  task_name: "ynat"
+model:
+  model_name_or_path: "klue/bert-base"
+trainer:
+  max_seq_length: 32
+  train_batch_size: 1
+  eval_batch_size: 1
+  cpkt_path: "/Users/byungheechoi/Documents/workspace/vscode/klue_pl_ckpt"
+
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .
