@@ -16,7 +16,7 @@ class SequenceClassificationModel(LightningModule):
         self,
         model_name_or_path: str,
         num_labels: int,
-        weight_decay: float = 1.0,
+        weight_decay: float = 0.0,
         learning_rate: float = 2e-5,
         adam_epsilon: float = 1e-8,
         warmup_steps: int = 0,
@@ -61,9 +61,10 @@ class SequenceClassificationModel(LightningModule):
         preds = torch.cat([x["preds"] for x in outputs]).detach().cpu().numpy()
         labels = torch.cat([x["labels"] for x in outputs]).detach().cpu().numpy()
         loss = torch.stack([x["loss"] for x in outputs]).mean()
+        accuracy = accuracy_score(labels, preds)
 
         self.log("val_loss", loss, prog_bar=True)
-        self.log("val_acc", accuracy_score(labels, preds), prog_bar=True)
+        self.log("val_acc", accuracy, prog_bar=True)
 
     def setup(self, stage=None):
         if stage != "fit":
@@ -71,7 +72,6 @@ class SequenceClassificationModel(LightningModule):
         train_loader = self.trainer.datamodule.train_dataloader()
 
         tb_size = self.hparams.train_batch_size * max(1, int(self.trainer.gpus or 1))
-        # accumulate_grad_batches는 몇 번의 배치동안 누적해서 계산할 것인지
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
         self.total_steps = (len(train_loader.dataset) // tb_size) // ab_size
 

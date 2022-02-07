@@ -3,10 +3,11 @@ datasets:
 model:
   model_name_or_path: "klue/bert-base"
 trainer:
-  max_seq_length: 32
-  train_batch_size: 1
-  eval_batch_size: 1
-  cpkt_path: "/Users/byungheechoi/Documents/workspace/vscode/klue_pl_ckpt"
+  max_seq_length: 64
+  train_batch_size: 128
+  eval_batch_size: 128
+  cpkt_path: "ckpt"
+  max_epochs: 10
 
 hydra:  
   output_subdir: null  
