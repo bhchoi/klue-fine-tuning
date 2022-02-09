@@ -36,26 +36,35 @@ class SequenceClassificationModel(LightningModule):
 
     def forward(self, **inputs):
         return self.model(**inputs)
+    
+    def step(self, batch, mode):
+        outputs = self(**batch)
+        loss, logits = outputs.loss, outputs.logits
+        preds = None
+        labels = None
+        
+        if mode == "val" or mode == "test":
+            if self.hparams.num_labels > 1:
+                preds = torch.argmax(logits, axis=1)
+            else:
+                preds = logits.squeeze()
+            labels = batch["labels"]
+        
+        step_output = {
+            "loss": loss,
+            "labels": labels,
+            "preds": preds,
+        }
+        
+        return step_output
 
     def training_step(self, batch, batch_idx):
-        outputs = self(**batch)
-        loss = outputs[0]
-        return loss
+        outputs = self.step(batch, "train")
+        return outputs["loss"]
 
     def validation_step(self, batch, batch_idx):
-        outputs = self(**batch)
-        val_loss, logits = outputs[:2]
-
-        if self.hparams.num_labels > 1:
-            preds = torch.argmax(logits, axis=1)
-        else:
-            preds = logits.squeeze()
-
-        labels = batch["labels"]
-
-        validation_output = {"loss": val_loss, "preds": preds, "labels": labels}
-
-        return validation_output
+        outputs = self.step(batch, "val")
+        return outputs
 
     def validation_epoch_end(self, outputs):
         preds = torch.cat([x["preds"] for x in outputs]).detach().cpu().numpy()
@@ -65,6 +74,10 @@ class SequenceClassificationModel(LightningModule):
 
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_acc", accuracy, prog_bar=True)
+        
+    def test_step(self, batch, batch_idx):
+        outputs = self.step(batch, "test")
+        return outputs
 
     def setup(self, stage=None):
         if stage != "fit":
