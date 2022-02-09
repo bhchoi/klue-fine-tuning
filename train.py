@@ -24,7 +24,7 @@ def main(cfg: DictConfig) -> None:
     )
     checkpoint_callback = ModelCheckpoint(
         monitor="val_loss",
-        dirpath=cfg.trainer.cpkt_path,
+        dirpath=cfg.trainer.ckpt_path,
         filename="{epoch:02d}-{val_loss:.3f}-{val_acc:.3f}",
         auto_insert_metric_name=True,
         save_top_k=-1,
