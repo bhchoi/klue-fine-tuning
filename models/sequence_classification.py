@@ -17,9 +17,9 @@ class SequenceClassificationModel(LightningModule):
         model_name_or_path: str,
         num_labels: int,
         weight_decay: float = 0.0,
-        learning_rate: float = 2e-5,
+        learning_rate: float = 5e-5,
         adam_epsilon: float = 1e-8,
-        warmup_steps: int = 0,
+        warmup_ratio: float = 0.1,
         train_batch_size: int = 128,
         eval_batch_size: int = 128,
         **kwargs,
@@ -86,7 +86,7 @@ class SequenceClassificationModel(LightningModule):
 
         tb_size = self.hparams.train_batch_size * max(1, int(self.trainer.gpus or 1))
         ab_size = self.trainer.accumulate_grad_batches * float(self.trainer.max_epochs)
-        self.total_steps = (len(train_loader.dataset) // tb_size) // ab_size
+        self.total_steps = (len(train_loader.dataset) // tb_size) * ab_size
 
     def configure_optimizers(self):
         model = self.model
@@ -117,7 +117,7 @@ class SequenceClassificationModel(LightningModule):
 
         scheduler = get_linear_schedule_with_warmup(
             optimizer,
-            num_warmup_steps=self.hparams.warmup_steps,
+            num_warmup_steps=self.hparams.warmup_ratio * self.total_steps,
             num_training_steps=self.total_steps,
         )
         scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
